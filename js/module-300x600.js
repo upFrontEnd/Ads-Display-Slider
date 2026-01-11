@@ -1,5 +1,15 @@
-import { animIntro, slider, animOutro } from "./main.js";
+import { slider, Ads2026 } from "./main.js";
 
-animIntro();
-slider();
-animOutro();
+// Départ
+Ads2026.introTimeline.to(Ads2026.logo, { opacity: 1, duration: 2 });
+
+// Carrousel (démarre quand le départ est fini)
+Ads2026.introTimeline.eventCallback("onComplete", () => {
+  slider(() => {
+    // Fin (démarre quand le carrousel est fini)
+    Ads2026.outroTimeline.play(0);
+  });
+});
+
+// Fin (placeholder)
+Ads2026.outroTimeline.to(Ads2026.logo, { opacity: 0, duration: 0.6 });

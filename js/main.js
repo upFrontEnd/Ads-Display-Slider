@@ -1,14 +1,14 @@
-// js/main.js
+// Elément du DOM et timelines GSAP 
+export const Ads2026 = {
+	timeline: gsap.timeline({}),
+	introTimeline: gsap.timeline({}),
+	outroTimeline: gsap.timeline({ paused: true }),
 
-export function animIntro() {
-  // TODO: plus tard
-}
+	logo: document.querySelector(".logo"),
+};
 
-export function animOutro() {
-  // TODO: plus tard
-}
-
-export function slider() {
+// Core du Slider (carrousel)
+export function slider(onComplete) {
   const gsap = window.gsap;
 
   const stage = document.querySelector(".carousel");
@@ -22,15 +22,20 @@ export function slider() {
   const stepX = slideW + gap;
   const centerX = (stageW - slideW) / 2;
 
-  const displayTime = 2;       // temps pendant lequel une slide reste affichée
-  const transitionTime = 1.5;  // durée du défilement + fade
+  const displayTime = 2;
+  const transitionTime = 1.5;
 
   const lastIndex = slides.length - 1;
 
   gsap.set(track, { x: centerX + stepX });
   gsap.set(slides, { autoAlpha: 0 });
+	gsap.set(stage, { autoAlpha: 1 });
 
-  const tl = gsap.timeline({ defaults: { ease: "power2.inOut" } });
+
+  const tl = gsap.timeline({
+    defaults: { ease: "power2.inOut" },
+    onComplete
+  });
 
   tl.to(track,     { x: centerX, duration: transitionTime }, 0)
     .to(slides[0], { autoAlpha: 1, duration: transitionTime }, 0);
