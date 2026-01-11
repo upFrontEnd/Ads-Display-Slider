@@ -38,7 +38,7 @@ body {
   top: 175px;
   transform: translateX(-50%);
   overflow: hidden;
-  width: 300px;
+  width: 250px;
   height: 250px;
   .carousel__track {
     /* Track: slides côte à côte */
@@ -56,26 +56,27 @@ body {
   .slide {
     flex: 0 0 250px;
     height: 250px;
-    margin-right: 40px; /* anciennement 20px */
+    margin-right: 40px; /* Doit être cohérent avec l'option gap*/
     &:last-child {
       margin-right: 0;
     }
   }
+	.slide__img {
+		width: 100%;
+		height: calc(100% - 24px); /* laisse de la place au texte */
+		display: block;
+		object-fit: contain;
+	}
+	
+	.slide__text {
+		height: 24px;
+		margin: 0;
+		line-height: 24px;
+		font-size: 12px;
+		color: #333;
+		text-align: center;
+	}
 }
 
-.slide__img {
-  width: 100%;
-  height: calc(100% - 24px); /* laisse de la place au texte */
-  display: block;
-  object-fit: contain;
-}
 
-.slide__text {
-  height: 24px;
-  margin: 0;
-  line-height: 24px;
-  font-size: 12px;
-  color: #333;
-  text-align: center;
-}
 
