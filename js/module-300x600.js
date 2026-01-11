@@ -7,7 +7,7 @@ Ads2026.introTimeline.to(Ads2026.logo, { opacity: 1, duration: 2 });
 Ads2026.introTimeline.eventCallback("onComplete", () => {
   slider(() => {
 		Ads2026.outroTimeline.play(0);
-	}, "y");	
+	}, "x");	
 });
 
 // Fin (placeholder)

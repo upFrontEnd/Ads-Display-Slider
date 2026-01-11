@@ -1,5 +1,3 @@
-// js/main.js
-
 // Elément du DOM et timelines GSAP
 export const Ads2026 = {
   timeline: gsap.timeline({}),
@@ -17,6 +15,11 @@ export function slider(onComplete, axis = "x") {
   const stage = document.querySelector(".carousel");
   const track = document.querySelector(".carousel__track");
   const slides = Array.from(track.querySelectorAll(".slide"));
+  const images = Array.from(stage.querySelectorAll("img"));
+
+  // Empêche le drag natif (sinon le “swipe souris” ne déclenche pas correctement)
+  stage.addEventListener("dragstart", (e) => e.preventDefault());
+  images.forEach((img) => (img.draggable = false));
 
   const stageRect = stage.getBoundingClientRect();
   const slideRect = slides[0].getBoundingClientRect();
@@ -33,8 +36,8 @@ export function slider(onComplete, axis = "x") {
   const centerX = (stageW - slideW) / 2;
   const centerY = (stageH - slideH) / 2;
 
-  const displayTime = 2;       // temps pendant lequel une slide reste affichée
-  const transitionTime = 1.5;  // durée du défilement + fade
+  const displayTime = 2; // temps pendant lequel une slide reste affichée
+  const transitionTime = 1.5; // durée du défilement + fade
 
   const lastIndex = slides.length - 1;
 
@@ -45,13 +48,13 @@ export function slider(onComplete, axis = "x") {
   // - X : on va vers la gauche
   // - Y : on descend (haut -> bas)
   function pos(i) {
-    return axis === "y" ? (centerY + i * stepY) : (centerX - i * stepX);
+    return axis === "y" ? centerY + i * stepY : centerX - i * stepX;
   }
 
   // ---------------------------------------------------------------------------
   // LAYOUT (core)
   // - X : layout CSS en flex-row (classique)
-  // - Y : slides en "pile" (absolute) + track qui descend
+  // - Y : slides en "pile" (absolute) + track qui descend (haut -> bas)
   // ---------------------------------------------------------------------------
   if (axis === "y") {
     track.style.display = "block";
@@ -67,7 +70,7 @@ export function slider(onComplete, axis = "x") {
       s.style.marginRight = "0px";
       s.style.marginBottom = "0px";
 
-      // Slide 2/3 sont placées au-dessus : quand le track descend, elles "entrent" par le haut
+      // Slide 2/3 placées au-dessus : le track descend => la suivante “entre” par le haut
       gsap.set(s, { x: 0, y: -i * stepY });
     });
 
@@ -103,7 +106,7 @@ export function slider(onComplete, axis = "x") {
   let currentIndex = 0;
 
   // Hover amélioré :
-  // - si on hover pendant un défilement, on laisse finir le défilement puis on pause
+  // - si hover pendant un défilement, on laisse finir le défilement puis on pause
   let hoverPauseRequested = false;
   let isTransitioning = false;
 
@@ -121,8 +124,8 @@ export function slider(onComplete, axis = "x") {
     // Entrée depuis le bord (uniquement au tout début)
     if (fromOffscreen && startIndex === 0) {
       gsap.set(slides[0], { autoAlpha: 0 });
-      if (axis === "y") gsap.set(track, { y: centerY - slideH });   // haut
-      else gsap.set(track, { x: centerX + stepX });                 // droite
+      if (axis === "y") gsap.set(track, { y: centerY - slideH }); // haut
+      else gsap.set(track, { x: centerX + stepX }); // droite
     }
 
     const t = gsap.timeline({
@@ -132,10 +135,10 @@ export function slider(onComplete, axis = "x") {
 
     currentIndex = startIndex;
 
-    // Pause "au bon moment" si un hover a été demandé
+    // Pause “au bon moment” si hover demandé
     function maybePauseAfterMove() {
       isTransitioning = false;
-      if (hoverPauseRequested) t.pause();
+      hoverPauseRequested && t.pause();
     }
 
     // Entrée (défilement en cours)
@@ -157,7 +160,9 @@ export function slider(onComplete, axis = "x") {
       const next = i + 1;
       const label = `to${next + 1}`;
 
-      t.add(() => { isTransitioning = true; }, label);
+      t.add(() => {
+        isTransitioning = true;
+      }, label);
 
       t.to(track, { [axis]: pos(next), duration: transitionTime }, label)
         .to(slides[i], { autoAlpha: 0, duration: transitionTime }, label)
@@ -179,22 +184,24 @@ export function slider(onComplete, axis = "x") {
 
     // Sortie finale
     const outPos =
-      axis === "y"
-        ? (pos(lastIndex) + stepY)
-        : (centerX - slides.length * stepX);
+      axis === "y" ? pos(lastIndex) + stepY : centerX - slides.length * stepX;
 
-    t.add(() => { isTransitioning = true; }, "out");
+    t.add(() => {
+      isTransitioning = true;
+    }, "out");
 
     t.to(track, { [axis]: outPos, duration: transitionTime }, "out")
       .to(slides[lastIndex], { autoAlpha: 0, duration: transitionTime }, "out")
-      .add(() => { isTransitioning = false; }, "out+=" + transitionTime);
+      .add(() => {
+        isTransitioning = false;
+      }, "out+=" + transitionTime);
 
     return t;
   }
 
   // ---------------------------------------------------------------------------
   // Interactions (core, par défaut)
-  // 1) Hover : pause uniquement à la fin du défilement en cours
+  // 1) Hover : pause seulement à la fin du défilement en cours
   // 2) Drag souris
   // 3) Swipe mobile (même logique via pointer events)
   // ---------------------------------------------------------------------------
@@ -208,21 +215,19 @@ export function slider(onComplete, axis = "x") {
   stage.addEventListener("pointerenter", () => {
     if (isDragging || !tl) return;
     hoverPauseRequested = true;
-
-    // Si on est déjà dans une phase "stable", on pause tout de suite
-    if (!isTransitioning) tl.pause();
+    !isTransitioning && tl.pause();
   });
 
   stage.addEventListener("pointerleave", () => {
     if (isDragging || !tl) return;
     hoverPauseRequested = false;
-
-    // Si on était en pause à cause du hover, on reprend
-    if (tl.paused()) tl.resume();
+    tl.paused() && tl.resume();
   });
 
   stage.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
     isDragging = true;
+
     stage.setPointerCapture(e.pointerId);
 
     tl && tl.pause();
@@ -246,61 +251,68 @@ export function slider(onComplete, axis = "x") {
     const minPos = Math.min(a, b);
     const maxPos = Math.max(a, b);
 
-    if (nextPos < minPos) nextPos = minPos;
-    if (nextPos > maxPos) nextPos = maxPos;
+    nextPos < minPos && (nextPos = minPos);
+    nextPos > maxPos && (nextPos = maxPos);
 
     gsap.set(track, { [axis]: nextPos });
   });
 
+  // ✅ Transition “comme l’auto” au relâchement (plus de snap brusque)
   stage.addEventListener("pointerup", (e) => {
     if (!isDragging) return;
 
     isDragging = false;
+
     stage.releasePointerCapture(e.pointerId);
     stage.style.cursor = "";
 
     const p = axis === "y" ? e.clientY : e.clientX;
     const delta = p - pointerStart;
 
-    // Seuil : si le geste est assez marqué => on force le slide suivant/précédent
     const threshold = (axis === "y" ? slideH : slideW) * 0.15;
 
     let target = currentIndex;
 
     if (Math.abs(delta) > threshold) {
-      // X : gauche => next | droite => prev
-      // Y : bas   => next | haut   => prev
-      const dir = axis === "y" ? (delta > 0 ? 1 : -1) : (delta < 0 ? 1 : -1);
+      const dir = axis === "y" ? (delta > 0 ? 1 : -1) : delta < 0 ? 1 : -1;
       target = currentIndex + dir;
-      if (target < 0) target = 0;
-      if (target > lastIndex) target = lastIndex;
+      target < 0 && (target = 0);
+      target > lastIndex && (target = lastIndex);
     } else {
-      // Snap au plus proche
       const cur = gsap.getProperty(track, axis);
       target =
         axis === "y"
           ? Math.round((cur - centerY) / stepY)
           : Math.round((centerX - cur) / stepX);
 
-      if (target < 0) target = 0;
-      if (target > lastIndex) target = lastIndex;
+      target < 0 && (target = 0);
+      target > lastIndex && (target = lastIndex);
     }
 
-    gsap.to(track, {
-      [axis]: pos(target),
-      duration: 0.35,
-      ease: "power2.out",
-      onComplete: () => {
-        gsap.set(slides, { autoAlpha: 0 });
-        gsap.set(slides[target], { autoAlpha: 1 });
+    // Si on relâche sans changer de slide, on repart simplement en autoplay
+    if (target === currentIndex) {
+      tl = buildTimeline(currentIndex, false);
+      hoverPauseRequested && tl.pause();
+      return;
+    }
 
-        // On reprend depuis target (sans rejouer l’entrée depuis le bord)
-        tl = buildTimeline(target, false);
+    // Transition identique à l’animation initiale : slide + fade
+    isTransitioning = true;
 
-        // Si on est toujours hover, on pause immédiatement (phase stable)
-        if (hoverPauseRequested) tl.pause();
-      },
-    });
+    gsap
+      .timeline({
+        defaults: { ease: "power2.inOut" },
+        onComplete: () => {
+          currentIndex = target;
+          isTransitioning = false;
+
+          tl = buildTimeline(target, false);
+          hoverPauseRequested && tl.pause();
+        },
+      })
+      .to(track, { [axis]: pos(target), duration: transitionTime }, 0)
+      .to(slides[currentIndex], { autoAlpha: 0, duration: transitionTime }, 0)
+      .to(slides[target], { autoAlpha: 1, duration: transitionTime }, 0);
   });
 
   stage.addEventListener("pointercancel", () => {
