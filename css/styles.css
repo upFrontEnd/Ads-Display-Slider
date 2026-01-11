@@ -63,10 +63,6 @@ body {
   }
 }
 
-.slide:last-child {
-  margin-right: 0;
-}
-
 .slide__img {
   width: 100%;
   height: calc(100% - 24px); /* laisse de la place au texte */
@@ -82,3 +78,4 @@ body {
   color: #333;
   text-align: center;
 }
+
